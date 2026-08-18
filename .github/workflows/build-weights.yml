@@ -12,21 +12,29 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Do not use setup-python's `cache: pip` here: this repository has no
+      # requirements.txt or pyproject.toml, so setup-python cannot determine
+      # a dependency file and fails before the build starts.
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
-          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install pandas pyarrow torch
+
+      - name: Check required source data
+        run: |
+          test -s data/2025_Connectivity_783.parquet
+          test -s data/2025_Completeness_783.csv
+          ls -lh data/2025_Connectivity_783.parquet data/2025_Completeness_783.csv
 
       - name: Build sparse weight pickles
         run: python scripts/build_weight_pickles.py
